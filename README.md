@@ -1,0 +1,67 @@
+# film-cache-demo
+
+1. Задача (технические требования)
+```angular2html
+- Оптимизация производительности с Hibernate и Redis
+- демо проект на базе Sakila
+- При просмотре детальной информации о фильме нужно отобразить:
+ - название
+ - описание
+ - год выпуска
+ - рейтинг
+ - список актеров
+ - категории
+
+- В реляционной БД эти данные хранятся в разных таблицах:
+  - film
+  - actor
+  - film_actor
+  - category
+  - film_category
+
+- Типичный запрос без оптимизации может приводить к проблеме N+1
+```
+
+2. Решение
+```angular2html
+- Выгружаем агрегатированные данные (фильм + актеры + категории) в Redis
+
+- Приложение обращается сначала к Redis и только при отсутствии данных - к БД
+
+- Структура данных:
+  - film: film_id, title, description, release_year, rental_rate, rating
+  - actor: actor_id, first_name, last_name
+  - film_actor: film_id, actor_id <- many-to-many
+  - category: category_id, name
+  - film_category: film_id, category_id <- many-to-many
+
+- Технологический стек:
+  - Java 17 
+  - Maven
+  - Hibernate
+  - PostgreSQL
+  - Redis
+  - P6Spy
+  - Docker 
+
+- Domain:
+  - Film
+  - Actor
+  - Category
+- DAO - методы получения данных из MySQL
+- Redis DTO - класс FilmDetail (плоская структура, готова для кэша)
+- Загружаем фильмы из MySQL, трансформируем в DTO, сохраняем в Redis, тестируем чтение
+```
+
+3. Окружение
+```bash
+docker run -d \
+  --name films_sql \
+  -e POSTGRES_DB=films_db
+  -e POSTGRES_USER=hasl \
+  -e POSTGRES_PASSWORD=hasl \
+  -p 5432:5432 \
+  -v postgres_data:/var/lib/postgresql/data \
+  postgres:15-alpine
+docker run -d --name redis -p 6379:6379 redis:6.2-alpine
+```
