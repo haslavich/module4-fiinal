@@ -53,15 +53,8 @@
 - Загружаем фильмы из MySQL, трансформируем в DTO, сохраняем в Redis, тестируем чтение
 ```
 
-3. Окружение
+3. Окружение (переделать под Compose)
 ```bash
-docker run -d \
-  --name films_sql \
-  -e POSTGRES_DB=films_db
-  -e POSTGRES_USER=hasl \
-  -e POSTGRES_PASSWORD=hasl \
-  -p 5432:5432 \
-  -v postgres_data:/var/lib/postgresql/data \
-  postgres:15-alpine
+docker run -d --name films_sql -e POSTGRES_DB=films_db -e POSTGRES_USER=hasl -e POSTGRES_PASSWORD=hasl -p 5432:5432 -v postgres_data:/var/lib/postgresql/data postgres:15-alpine
 docker run -d --name redis -p 6379:6379 redis:6.2-alpine
 ```

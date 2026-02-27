@@ -20,7 +20,6 @@
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
             <version>42.7.10</version>
-            <scope>compile</scope>
         </dependency>
 
         <!-- Hibernate-->
