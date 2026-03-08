@@ -13,6 +13,7 @@ import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.sync.RedisStringCommands;
+import lombok.extern.slf4j.Slf4j;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.cfg.Configuration;
@@ -26,6 +27,7 @@ import java.util.stream.Collectors;
 
 import static java.util.Objects.nonNull;
 
+@Slf4j
 public class App {
     private final SessionFactory sessionFactory;
     private final RedisClient redisClient;
@@ -47,6 +49,7 @@ public class App {
     private RedisClient prepareRedisClient() {
         RedisClient redisClient = RedisClient.create(RedisURI.create("localhost", 6379));
         try (StatefulRedisConnection<String, String> connection = redisClient.connect()) {
+            log.info("Connected to Redis");
             System.out.println("\nConnected to Redis\n");
         }
         return redisClient;
@@ -88,7 +91,7 @@ public class App {
             session.beginTransaction();
 
             int totalCount = app.cityDAO.getTotalCount();
-            int step = 500;
+            int step = 1; //todo шаг счета
             for (int i = 0; i < totalCount; i += step) {
                 allCities.addAll(app.cityDAO.getItems(i, step));
             }
@@ -134,12 +137,12 @@ public class App {
                 try {
                     sync.set(String.valueOf(cityCountry.getId()), mapper.writeValueAsString(cityCountry));
                 } catch (JsonProcessingException e) {
-                    e.printStackTrace();
+                    log.error ("Ошибка записи в Redis");
                 }
             }
         }
     }
-    public static void main(String[] args) {
+       public static void main(String[] args) {
         App app = new App();
         List<City> allCities = app.fetchData(app);
         List<CityCountry> preparedData = app.transformData(allCities);
