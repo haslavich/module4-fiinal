@@ -19,6 +19,9 @@ import org.hibernate.SessionFactory;
 import org.hibernate.cfg.Configuration;
 import org.hibernate.cfg.Environment;
 
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
@@ -61,8 +64,22 @@ public class App {
         properties.put(Environment.DIALECT, "org.hibernate.dialect.PostgreSQLDialect");
         properties.put(Environment.DRIVER, "org.postgresql.Driver");
         properties.put(Environment.URL, "jdbc:postgresql://localhost:5430/db");
-        properties.put(Environment.USER, "user");
-        properties.put(Environment.PASS, "password");
+
+        Properties secretProperties=new Properties();
+        try (InputStream inputStream=new FileInputStream("application.properties")) {
+            secretProperties.load(inputStream);
+        }catch (IOException e) {
+            throw new RuntimeException("Не удалось загрузить application properties");
+        }
+        String dbUser=secretProperties.getProperty("db.user");
+        String dbPassword=secretProperties.getProperty("db.password");
+
+        if (dbUser==null||dbPassword==null) {
+            throw new RuntimeException("Пользователь и пароль БД не найдены в applications.properties");
+        }
+        properties.put(Environment.USER, dbUser);
+        properties.put(Environment.PASS, dbPassword);
+
         properties.put(Environment.CURRENT_SESSION_CONTEXT_CLASS, "thread");
         properties.put(Environment.HBM2DDL_AUTO, "validate");
         properties.put(Environment.STATEMENT_BATCH_SIZE, "100");
@@ -147,6 +164,7 @@ public class App {
         List<City> allCities = app.fetchData(app);
         List<CityCountry> preparedData = app.transformData(allCities);
         app.pushToRedis(preparedData);
+        log.info("Загружен перечень городов, всего: " + allCities.size());
         app.shutdown();
     }
 

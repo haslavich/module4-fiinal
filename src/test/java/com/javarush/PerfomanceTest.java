@@ -14,7 +14,6 @@ import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.sync.RedisStringCommands;
 import lombok.extern.slf4j.Slf4j;
-import org.checkerframework.checker.nullness.qual.NonNull;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.cfg.Configuration;
@@ -154,8 +153,12 @@ class PerfomanceTest {
         properties.put(Environment.DIALECT, "org.hibernate.dialect.PostgreSQLDialect");
         properties.put(Environment.DRIVER, "org.postgresql.Driver");
         properties.put(Environment.URL, "jdbc:postgresql://localhost:5430/db");
-        properties.put(Environment.USER, "user");
-        properties.put(Environment.PASS, "password"); //todo передать пароль в маске
+
+        String dbUser=System.getenv("DB_USER");
+        String dbPassword=System.getenv("DB_PASSWORD");
+        properties.put(Environment.USER,dbUser);
+        properties.put(Environment.PASS,dbPassword);
+
         properties.put(Environment.CURRENT_SESSION_CONTEXT_CLASS, "thread");
         properties.put(Environment.HBM2DDL_AUTO, "validate");
         properties.put(Environment.STATEMENT_BATCH_SIZE, "100");
