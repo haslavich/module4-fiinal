@@ -14,6 +14,7 @@ import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.sync.RedisStringCommands;
 import lombok.extern.slf4j.Slf4j;
+import org.flywaydb.core.Flyway;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.cfg.Configuration;
@@ -160,6 +161,7 @@ public class App {
         }
     }
        public static void main(String[] args) {
+        runMigrations();
         App app = new App();
         List<City> allCities = app.fetchData(app);
         List<CityCountry> preparedData = app.transformData(allCities);
@@ -167,8 +169,15 @@ public class App {
         log.info("Загружен перечень городов, всего: " + allCities.size());
         app.shutdown();
     }
-
-
-
-
+    public static void runMigrations() {
+        String dbUser="user";
+        String dbPass="password";
+        Flyway flyway=Flyway.configure()
+                .dataSource("jdbc:postgresql://localhost:5430/db",dbUser,dbPass)
+                .schemas("world")
+                .baselineOnMigrate(true)
+                .baselineVersion("0")
+                .load();
+        flyway.migrate();
+    }
 }

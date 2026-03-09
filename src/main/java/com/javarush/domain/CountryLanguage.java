@@ -31,5 +31,6 @@ public class CountryLanguage {
     @Type(type = "org.hibernate.type.NumericBooleanType")
     private Boolean isOfficial;
 
+    @Column(name = "percentage")
     private BigDecimal percentage;
 }
