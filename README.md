@@ -3,37 +3,26 @@
 1. Задача (технические требования)
 ```angular2html
 - Оптимизация производительности с Hibernate и Redis
-- демо проект на базе Sakila
-- При просмотре детальной информации о фильме нужно отобразить:
- - название
- - описание
- - год выпуска
- - рейтинг
- - список актеров
- - категории
+- демо проект на базе db (PostgreSQL)
+- необходимо оптимизировать время наиболее частого запроса запроса города путем интеграции Redis 
 
 - В реляционной БД эти данные хранятся в разных таблицах:
-  - film
-  - actor
-  - film_actor
-  - category
-  - film_category
-
-- Типичный запрос без оптимизации может приводить к проблеме N+1
+  - country
+  - city
+  - country_language
 ```
 
 2. Решение
 ```angular2html
-- Выгружаем агрегатированные данные (фильм + актеры + категории) в Redis
+- Выгружаем агрегатированные данные (города+страна) в Redis
 
 - Приложение обращается сначала к Redis и только при отсутствии данных - к БД
 
 - Структура данных:
-  - film: film_id, title, description, release_year, rental_rate, rating
-  - actor: actor_id, first_name, last_name
-  - film_actor: film_id, actor_id <- many-to-many
-  - category: category_id, name
-  - film_category: film_id, category_id <- many-to-many
+  - schema=world
+  - country ( id,code,code_2,name,continent,region,surface_area,indep_year,population,life_expectancy,gnp,gnpo_id,local_name,government_form,head_of_state,capital)
+  - city (id,name,country_id,district,population)
+  - country_language (id,country_id,language,is_official,percentage) 
 
 - Технологический стек:
   - Java 17 
@@ -45,16 +34,32 @@
   - Docker 
 
 - Domain:
-  - Film
-  - Actor
-  - Category
-- DAO - методы получения данных из MySQL
-- Redis DTO - класс FilmDetail (плоская структура, готова для кэша)
-- Загружаем фильмы из MySQL, трансформируем в DTO, сохраняем в Redis, тестируем чтение
+  - City
+  - Country
+  - Countrylanguage
+- DAO - методы получения данных из PostgreSQL
+- Redis DTO - класс CityCountry (плоская структура, готова для кэша)
+- Загружаем города из postgreSQL, трансформируем в DTO, сохраняем в Redis, тестируем чтение
 ```
 
-3. Окружение (переделать под Compose)
-```bash
-docker run -d --name films_sql -e POSTGRES_DB=films_db -e POSTGRES_USER=hasl -e POSTGRES_PASSWORD=hasl -p 5432:5432 -v postgres_data:/var/lib/postgresql/data postgres:15-alpine
-docker run -d --name redis -p 6379:6379 redis:6.2-alpine
+3. Запуск окружения через файл Docker-compose.yaml 
+
+4. Апгрейд проекта
+```angular2html
+1) Предметная область: страны, города, языки
+2) Связи: @OneToMany страна -> языки, @ManyToOne город -> страна, @OneToOne страна -> столица.
+3) Проблема N+1: JOIN FETCH, с городами и странами
+4) Кэшируемые данные: плоский DTO CityCountry(id города, название, население, данные страны, список языков)
+5) Трансформация: ТЗ: City -> CityCountry
+6) Ключ в Redis: <id города>
+7) Тестирование: два теста, сравниваем время
+```
+
+5. Дополнительный функционал
+```angular2html
+1) Безопасное хранение логина и пароля:
+   - в propertie-файле 
+   - в переменных окружения требуется настроить значения db_password, db_user (в данном проекте файл properties - загружен в Git)
+2) Профессиональный бенчмаркинг с JMH
+3) Система миграций Flyway 
 ```
