@@ -1,0 +1,1 @@
+CREATE INDEX idx_city_population ON city(population)
